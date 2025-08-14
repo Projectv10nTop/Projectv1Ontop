@@ -333,7 +333,7 @@ local teleportSwitch = rebirths:AddSwitch("Auto Teleport to Muscle King", functi
     end
 end, "Tp to Mk")
 
-local tabKiller = window:AddTab("Kill")
+local Killer = window:AddTab("Kill")
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
