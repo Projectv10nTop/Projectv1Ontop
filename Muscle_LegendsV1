@@ -173,7 +173,44 @@ local function autoRockFarm(rockName, toggleVar)
         task.wait(0.1)
     end
 end
-    
+
+local folder2 = AutoFarm:AddFolder("Kill Aura")
+
+folder2:AddTextBox("Size (1-140)", function(text)
+    local range = tonumber(text)
+    if range then
+        _G.deathRingRange = math.clamp(range, 1, 140)
+    end
+end)
+
+local deathRingSwitch = folder2:AddSwitch("Death Ring", function(bool)
+    _G.deathRingEnabled = bool
+    if bool then
+        if not _G.deathRingConnection then
+            _G.deathRingConnection = game:GetService("RunService").Heartbeat:Connect(function()
+                local character = checkCharacter()
+                local myPosition = character and character:FindFirstChild("HumanoidRootPart") and character.HumanoidRootPart.Position
+                if not myPosition then return end
+
+                for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
+                    if player ~= game.Players.LocalPlayer and not isWhitelisted(player) and isPlayerAlive(player) then
+                        local distance = (myPosition - player.Character.HumanoidRootPart.Position).Magnitude
+                        if distance <= (_G.deathRingRange or 20) then
+                            killPlayer(player)
+                        end
+                    end
+                end
+            end)
+        end
+    else
+        if _G.deathRingConnection then
+            _G.deathRingConnection:Disconnect()
+            _G.deathRingConnection = nil
+        end
+    end
+end)
+deathRingSwitch:Set(false)
+
 local Rock = window:AddTab("Rock")
 
 function gettool()
