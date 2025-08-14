@@ -174,94 +174,6 @@ local function autoRockFarm(rockName, toggleVar)
     end
 end
 
-local folder2 = AutoFarm:AddFolder("Kill From Long Distance")
-
-local function killPlayer(player)
-    local char = player.Character
-    if char and char:FindFirstChild("Humanoid") then
-        char.Humanoid.Health = 0
-    end
-end
-
-local ringPart = Instance.new("Part")
-ringPart.Name = "DeathRingVisual"
-ringPart.Anchored = true
-ringPart.CanCollide = false
-ringPart.Material = Enum.Material.ForceField
-ringPart.Color = Color3.fromRGB(0, 0, 139)
-ringPart.Transparency = 0.5
-ringPart.Shape = Enum.PartType.Cylinder
-ringPart.Parent = workspace
-
-local function updateRingSize()
-    local range = _G.deathRingRange or 20
-    ringPart.Size = Vector3.new(range * 2, 0.2, range * 2)
-end
-
-local pulseDirection = 1
-local function pulseEffect()
-    ringPart.Transparency = ringPart.Transparency + (pulseDirection * 0.01)
-    if ringPart.Transparency <= 0.3 then pulseDirection = 1 end
-    if ringPart.Transparency >= 0.6 then pulseDirection = -1 end
-end
-
-folder2:AddTextBox("Size (1-140)", function(text)
-    local range = tonumber(text)
-    if range then
-        _G.deathRingRange = math.clamp(range, 1, 140)
-        updateRingSize()
-    end
-end)
-
-local deathRingSwitch = folder2:AddSwitch("Death Ring", function(bool)
-    _G.deathRingEnabled = bool
-
-    if bool then
-        ringPart.Transparency = 0.5
-        updateRingSize()
-
-        if not _G.deathRingConnection then
-            _G.deathRingConnection = game:GetService("RunService").Heartbeat:Connect(function()
-                local character = checkCharacter and checkCharacter() or game.Players.LocalPlayer.Character
-                if not character or not character:FindFirstChild("HumanoidRootPart") then return end
-
-                local hrp = character.HumanoidRootPart
-                ringPart.CFrame = CFrame.new(hrp.Position.X, hrp.Position.Y - (hrp.Size.Y / 2) + 0.1, hrp.Position.Z) 
-                    * CFrame.Angles(math.rad(90), 0, 0)
-
-                pulseEffect()
-
-                local myPosition = hrp.Position
-                local range = _G.deathRingRange or 20
-
-                for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
-                    if player ~= game.Players.LocalPlayer then
-                        local pRoot = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-                        if pRoot then
-                            local distance = (myPosition - pRoot.Position).Magnitude
-                            if distance <= range then
-                                local notWhitelisted = not (isWhitelisted and isWhitelisted(player))
-                                local alive = not isPlayerAlive or isPlayerAlive(player)
-                                if notWhitelisted and alive then
-                                    killPlayer(player)
-                                end
-                            end
-                        end
-                    end
-                end
-            end)
-        end
-    else
-        ringPart.Transparency = 1
-        if _G.deathRingConnection then
-            _G.deathRingConnection:Disconnect()
-            _G.deathRingConnection = nil
-        end
-    end
-end)
-
-deathRingSwitch:Set(false)
-
 local Rock = window:AddTab("Rock")
 
 function gettool()
@@ -2076,3 +1988,11 @@ end)
 Misc:AddSwitch("Auto Clear Inventory", function(state)
     autoEatBoostsEnabled = state
 end)
+
+local credits = window:AddTab("Credits")
+
+credits:AddLabel("Script Made By ZTX // Mowi // Sad")
+
+credits:AddLabel("Free Version")
+
+credits:AddLabel("discord: donna.ltc")
