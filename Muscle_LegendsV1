@@ -8,6 +8,8 @@ local window = library:AddWindow("Project V1", {
 
 local AutoFarm = window:AddTab("Farm")
 
+AutoFarm:AddLabel("Complements to Farm")
+
 local autoEatEnabled = false
 
 local function eatProteinEgg()
@@ -37,19 +39,6 @@ end)
 
 AutoFarm:AddSwitch("Auto Eat Egg", function(state)
     autoEatEnabled = state
-end)
-
-AutoFarm:AddButton("Teleport to Muscle King", function()
-    local player = game.Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-    humanoidRootPart.CFrame = CFrame.new(-8646, 17, -5738)
-    
-    game:GetService("StarterGui"):SetCore("SendNotification", {
-        Title = "Teletransporte",
-        Text = "Teleported To MK",
-        Duration = 0
-    })
 end)
 
 local repToggle = false
