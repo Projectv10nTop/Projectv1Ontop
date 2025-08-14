@@ -5,5 +5,31 @@ local window = library:AddWindow("Project V1", {
     min_size = Vector2.new(700, 700),
     can_resize = true,
 })
- 
+
 local main = window:AddTab("Main")
+
+local function addLogo()
+    local gui = game:GetService("CoreGui"):FindFirstChild("Elerium") or game.Players.LocalPlayer.PlayerGui:FindFirstChild("Elerium")
+    if gui then
+        local titleBar = gui:FindFirstChildWhichIsA("Frame", true)
+        if titleBar and not titleBar:FindFirstChild("Logo") then
+            local logo = Instance.new("ImageLabel")
+            logo.Name = "Logo"
+            logo.Size = UDim2.new(0, 40, 0, 40)
+            logo.BackgroundTransparency = 1
+            logo.Image = "rbxassetid://17124498485"
+            logo.Parent = titleBar
+
+            logo.AnchorPoint = Vector2.new(0, 0.5)
+            logo.Position = UDim2.new(0, 5, 0.5, 0)
+
+            -- Se o texto mudar de posição, a logo acompanha
+            titleBar:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+                logo.Position = UDim2.new(0, 5, 0.5, 0)
+            end)
+        end
+    end
+end
+
+-- Dá um tempinho para a UI carregar e adiciona a logo
+task.delay(0.5, addLogo)
