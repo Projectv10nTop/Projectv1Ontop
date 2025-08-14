@@ -174,7 +174,14 @@ local function autoRockFarm(rockName, toggleVar)
     end
 end
 
-local folder2 = AutoFarm:AddFolder("Kill from Long Distance")
+local folder2 = AutoFarm:AddFolder("Kill From Long Distance")
+
+local function killPlayer(player)
+    local char = player.Character
+    if char and char:FindFirstChild("Humanoid") then
+        char.Humanoid.Health = 0
+    end
+end
 
 local ringPart = Instance.new("Part")
 ringPart.Name = "DeathRingVisual"
@@ -188,7 +195,7 @@ ringPart.Parent = workspace
 
 local function updateRingSize()
     local range = _G.deathRingRange or 20
-    ringPart.Size = Vector3.new(0.2, range * 2, range * 2)
+    ringPart.Size = Vector3.new(range * 2, 0.2, range * 2)
 end
 
 local pulseDirection = 1
@@ -198,61 +205,45 @@ local function pulseEffect()
     if ringPart.Transparency >= 0.6 then pulseDirection = -1 end
 end
 
-local rotationAngle = 0
-local function rotateRing()
-    rotationAngle = rotationAngle + 1
-    if rotationAngle >= 360 then rotationAngle = 0 end
-end
-
 folder2:AddTextBox("Size (1-140)", function(text)
     local range = tonumber(text)
     if range then
         _G.deathRingRange = math.clamp(range, 1, 140)
-        print("[Death Ring] Range set to:", _G.deathRingRange)
         updateRingSize()
-    else
-        warn("[Death Ring] Invalid value:", text)
     end
 end)
 
-local deathRingSwitch = folder2:AddSwitch("Kill Aura", function(bool)
+local deathRingSwitch = folder2:AddSwitch("Death Ring", function(bool)
     _G.deathRingEnabled = bool
 
     if bool then
-        print("[Death Ring] Enabled")
         ringPart.Transparency = 0.5
+        updateRingSize()
 
         if not _G.deathRingConnection then
             _G.deathRingConnection = game:GetService("RunService").Heartbeat:Connect(function()
                 local character = checkCharacter and checkCharacter() or game.Players.LocalPlayer.Character
-                if character and character:FindFirstChild("HumanoidRootPart") then
-                    local pos = character.HumanoidRootPart.Position - Vector3.new(0, character.HumanoidRootPart.Size.Y / 2, 0)
-                    updateRingSize()
-                    rotateRing()
-                    ringPart.CFrame = CFrame.new(pos) * CFrame.Angles(math.rad(90), math.rad(rotationAngle), 0)
-                    pulseEffect()
-                end
+                if not character or not character:FindFirstChild("HumanoidRootPart") then return end
 
-                local myRoot = character and character:FindFirstChild("HumanoidRootPart")
-                if not myRoot then return end
-                local myPosition = myRoot.Position
+                local hrp = character.HumanoidRootPart
+                ringPart.CFrame = CFrame.new(hrp.Position.X, hrp.Position.Y - (hrp.Size.Y / 2) + 0.1, hrp.Position.Z) 
+                    * CFrame.Angles(math.rad(90), 0, 0)
+
+                pulseEffect()
+
+                local myPosition = hrp.Position
+                local range = _G.deathRingRange or 20
 
                 for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
                     if player ~= game.Players.LocalPlayer then
                         local pRoot = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
                         if pRoot then
                             local distance = (myPosition - pRoot.Position).Magnitude
-                            local range = _G.deathRingRange or 20
                             if distance <= range then
                                 local notWhitelisted = not (isWhitelisted and isWhitelisted(player))
                                 local alive = not isPlayerAlive or isPlayerAlive(player)
                                 if notWhitelisted and alive then
-                                    print("[Death Ring] Killing:", player.Name, "| Distance:", math.floor(distance))
-                                    if killPlayer then
-                                        killPlayer(player)
-                                    else
-                                        warn("[Death Ring] killPlayer function not defined")
-                                    end
+                                    killPlayer(player)
                                 end
                             end
                         end
@@ -261,7 +252,6 @@ local deathRingSwitch = folder2:AddSwitch("Kill Aura", function(bool)
             end)
         end
     else
-        print("[Death Ring] Disabled")
         ringPart.Transparency = 1
         if _G.deathRingConnection then
             _G.deathRingConnection:Disconnect()
