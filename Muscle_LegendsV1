@@ -6,7 +6,43 @@ local window = library:AddWindow("Project V1", {
     can_resize = true,
 })
 
-local farm = window:AddTab("Farm")
+local farme = window:AddTab("Farm")
+
+farme:AddButton("Gamepass AutoLift", function()
+    local gamepassFolder = game:GetService("ReplicatedStorage").gamepassIds
+    local player = game:GetService("Players").LocalPlayer
+    for _, gamepass in pairs(gamepassFolder:GetChildren()) do
+        local value = Instance.new("IntValue")
+        value.Name = gamepass.Name
+        value.Value = gamepass.Value
+        value.Parent = player.ownedGamepasses
+    end
+end, "Unlock AutoLift Passe")
+
+farme:AddSwitch("Auto Weight", function(Value)
+    _G.AutoWeight = Value
+    
+    if Value then
+        local weightTool = game.Players.LocalPlayer.Backpack:FindFirstChild("Weight")
+        if weightTool then
+            game.Players.LocalPlayer.Character.Humanoid:EquipTool(weightTool)
+        end
+    else
+        local character = game.Players.LocalPlayer.Character
+        local equipped = character:FindFirstChild("Weight")
+        if equipped then
+            equipped.Parent = game.Players.LocalPlayer.Backpack
+        end
+    end
+    
+    task.spawn(function()
+        while _G.AutoWeight do
+            if not _G.AutoWeight then break end
+            game:GetService("Players").LocalPlayer.muscleEvent:FireServer("rep")
+            task.wait(0.1)
+        end
+    end)
+end, "Auto Weight")
 
 local autoEatEnabled = false
 
@@ -35,98 +71,23 @@ task.spawn(function()
     end
 end)
 
-farm:AddSwitch("Auto Eat Egg", function(state)
+farme:AddSwitch("Auto Eat Egg", function(state)
     autoEatEnabled = state
 end)
 
-local farmGymsFolder = farm:AddFolder("Gym Training")
-
-local workoutPositions = {
-    ["Bench Press"] = {
-        ["Eternal Gym"] = CFrame.new(-7176.19141, 45.394104, -1106.31421),
-        ["Legend Gym"] = CFrame.new(4111.91748, 1020.46674, -3799.97217),
-        ["Muscle King Gym"] = CFrame.new(-8590.06152, 46.0167427, -6043.34717)
-    },
-    ["Squat"] = {
-        ["Eternal Gym"] = CFrame.new(-7176.19141, 45.394104, -1106.31421),
-        ["Legend Gym"] = CFrame.new(4304.99023, 987.829956, -4124.2334),
-        ["Muscle King Gym"] = CFrame.new(-8940.12402, 13.1642084, -5699.13477)
-    },
-    ["Deadlift"] = {
-        ["Eternal Gym"] = CFrame.new(-7176.19141, 45.394104, -1106.31421),
-        ["Legend Gym"] = CFrame.new(4304.99023, 987.829956, -4124.2334),
-        ["Muscle King Gym"] = CFrame.new(-8940.12402, 13.1642084, -5699.13477)
-    },
-    ["Pull Up"] = {
-        ["Eternal Gym"] = CFrame.new(-7176.19141, 45.394104, -1106.31421),
-        ["Legend Gym"] = CFrame.new(4304.99023, 987.829956, -4124.2334),
-        ["Muscle King Gym"] = CFrame.new(-8940.12402, 13.1642084, -5699.13477)
-    }
-}
-
-local workoutTypes = {
-    "Bench Press",
-    "Squat",
-    "Deadlift",
-    "Pull Up"
-}
-
-local gymLocations = {
-    "Eternal Gym",
-    "Legend Gym",
-    "Muscle King Gym"
-}
-
-local workoutTranslations = {
-    ["Bench Press"] = "Bench Press",
-    ["Squat"] = "Squat",
-    ["Deadlift"] = "Dead Lift",
-    ["Pull Up"] = "Pull Up"
-}
-
-local gymToggles = {}
-
-for _, workoutType in ipairs(workoutTypes) do
-    local dropdownName = workoutType .. "GymDropdown"
-    local spanishWorkoutName = workoutTranslations[workoutType]
+farme:AddButton("Muscle King Gym", function()
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    humanoidRootPart.CFrame = CFrame.new(-8646, 17, -5738)
     
-    local dropdown = farmGymsFolder:AddDropdown(spanishWorkoutName .. " - Gimnasio", function(selected)
-        _G["selected" .. string.gsub(workoutType, " ", "") .. "Gym"] = selected
-    end)
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Teletransporte",
+        Text = "Teleported To MK",
+        Duration = 0
+    })
+end)
     
-    for _, gymName in ipairs(gymLocations) do
-        dropdown:Add(gymName)
-    end
-    
-    local toggleName = workoutType .. "GymToggle"
-    local toggle = farmGymsFolder:AddSwitch(spanishWorkoutName, function(bool)
-        getgenv().workingGym = bool
-        getgenv().currentWorkoutType = workoutType
-        
-        if bool then
-            local selectedGym = _G["selected" .. string.gsub(workoutType, " ", "") .. "Gym"] or gymLocations[1]
-            
-            if workoutPositions[workoutType] and workoutPositions[workoutType][selectedGym] then
-                for otherType, otherToggle in pairs(gymToggles) do
-                    if otherType ~= workoutType and otherToggle then
-                        otherToggle:Set(false)
-                    end
-                end
-                
-                teleportAndStart(workoutType, workoutPositions[workoutType][selectedGym])
-            else
-                game:GetService("StarterGui"):SetCore("SendNotification", {
-                    Title = "Error",
-                    Text = "Position not found for " .. workoutType .. " in " .. selectedGym,
-                    Duration = 5
-                })
-            end
-        end
-    end)
-    
-    gymToggles[workoutType] = toggle
-end
-
 local Rock = window:AddTab("Rock")
 
 function gettool()
