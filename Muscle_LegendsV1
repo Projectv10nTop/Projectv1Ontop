@@ -6,43 +6,7 @@ local window = library:AddWindow("Project V1", {
     can_resize = true,
 })
 
-local farme = window:AddTab("Farm")
-
-farme:AddButton("Gamepass AutoLift", function()
-    local gamepassFolder = game:GetService("ReplicatedStorage").gamepassIds
-    local player = game:GetService("Players").LocalPlayer
-    for _, gamepass in pairs(gamepassFolder:GetChildren()) do
-        local value = Instance.new("IntValue")
-        value.Name = gamepass.Name
-        value.Value = gamepass.Value
-        value.Parent = player.ownedGamepasses
-    end
-end, "Unlock AutoLift Passe")
-
-farme:AddSwitch("Auto Weight", function(Value)
-    _G.AutoWeight = Value
-    
-    if Value then
-        local weightTool = game.Players.LocalPlayer.Backpack:FindFirstChild("Weight")
-        if weightTool then
-            game.Players.LocalPlayer.Character.Humanoid:EquipTool(weightTool)
-        end
-    else
-        local character = game.Players.LocalPlayer.Character
-        local equipped = character:FindFirstChild("Weight")
-        if equipped then
-            equipped.Parent = game.Players.LocalPlayer.Backpack
-        end
-    end
-    
-    task.spawn(function()
-        while _G.AutoWeight do
-            if not _G.AutoWeight then break end
-            game:GetService("Players").LocalPlayer.muscleEvent:FireServer("rep")
-            task.wait(0.1)
-        end
-    end)
-end, "Auto Weight")
+local AutoFarm = window:AddTab("Farm")
 
 local autoEatEnabled = false
 
@@ -71,11 +35,11 @@ task.spawn(function()
     end
 end)
 
-farme:AddSwitch("Auto Eat Egg", function(state)
+AutoFarm:AddSwitch("Auto Eat Egg", function(state)
     autoEatEnabled = state
 end)
 
-farme:AddButton("Muscle King Gym", function()
+AutoFarm:AddButton("Teleport to Muscle King", function()
     local player = game.Players.LocalPlayer
     local character = player.Character or player.CharacterAdded:Wait()
     local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
@@ -87,6 +51,139 @@ farme:AddButton("Muscle King Gym", function()
         Duration = 0
     })
 end)
+
+local repToggle = false
+
+AutoFarm:AddSwitch("Auto Farm (Equip Any tool)", function(state)
+    repToggle = state
+    while repToggle do
+        local args = { "rep" }
+        game:GetService("Players").LocalPlayer:WaitForChild("muscleEvent"):FireServer(unpack(args))
+        task.wait(0.2)
+    end
+end)
+
+local folder1 = AutoFarm:AddFolder("Tools")
+
+local weightOn = false
+folder1:AddSwitch("Weight", function(bool)
+    weightOn = bool
+    task.spawn(function()
+        while weightOn do
+            local tool = game.Players.LocalPlayer.Backpack:FindFirstChild("Weight")
+            if tool then
+                tool.Parent = game.Players.LocalPlayer.Character
+            end
+            task.wait(0.1)
+        end
+    end)
+end)
+
+local pushupsOn = false
+folder1:AddSwitch("Pushups", function(bool)
+    pushupsOn = bool
+    task.spawn(function()
+        while pushupsOn do
+            local tool = game.Players.LocalPlayer.Backpack:FindFirstChild("Pushups")
+            if tool then
+                tool.Parent = game.Players.LocalPlayer.Character
+            end
+            task.wait(0.1)
+        end
+    end)
+end)
+
+local handstandOn = false
+folder1:AddSwitch("Handstand", function(bool)
+    handstandOn = bool
+    task.spawn(function()
+        while handstandOn do
+            local tool = game.Players.LocalPlayer.Backpack:FindFirstChild("Handstand")
+            if tool then
+                tool.Parent = game.Players.LocalPlayer.Character
+            end
+            task.wait(0.1)
+        end
+    end)
+end)
+
+local situpsOn = false
+folder1:AddSwitch("Situps", function(bool)
+    situpsOn = bool
+    task.spawn(function()
+        while situpsOn do
+            local tool = game.Players.LocalPlayer.Backpack:FindFirstChild("Situps")
+            if tool then
+                tool.Parent = game.Players.LocalPlayer.Character
+            end
+            task.wait(0.1)
+        end
+    end)
+end)
+
+local function equipTool(toolName, character, backpack)
+    local existingTool = character:FindFirstChildOfClass("Tool")
+    if existingTool then
+        existingTool.Parent = backpack
+    end
+
+    local tool = backpack:FindFirstChild(toolName) or character:FindFirstChild(toolName)
+    if tool and tool.Parent ~= character then
+        tool.Parent = character
+    end
+end
+
+local function handleRock(rock, leftHand)
+    if rock then
+        rock.Size = Vector3.new(2, 1, 1)
+        rock.Transparency = 1
+        rock.CanCollide = false
+
+        if rock:FindFirstChild("rockGui") then
+            for _, v in pairs(rock.rockGui:GetChildren()) do
+                v.Visible = false
+            end
+        end
+
+        for _, particle in ipairs({"rockEmitter", "hoopParticle", "lavaParticle"}) do
+            if rock:FindFirstChild(particle) then
+                rock[particle]:Destroy()
+            end
+        end
+
+        rock.CFrame = leftHand.CFrame
+
+        local touchPart = rock:FindFirstChild("TouchPart")
+        if touchPart then
+            touchPart.CFrame = leftHand.CFrame
+            local fireTouch = Instance.new("RemoteEvent")
+            fireTouch.Parent = rock
+            fireTouch:FireServer(touchPart)
+        end
+    end
+end
+
+local function autoRockFarm(rockName, toggleVar)
+    local player = game.Players.LocalPlayer
+    local backpack = player:WaitForChild("Backpack")
+    local character = player.Character or player.CharacterAdded:Wait()
+    local leftHand = character:WaitForChild("LeftHand")
+    local rock = game.Workspace.machinesFolder:FindFirstChild(rockName)
+    rock = rock and rock:FindFirstChild("Rock")
+
+    _G[toggleVar] = true
+
+    while _G[toggleVar] do
+        for _, toolName in ipairs({"Punch", "Pushups"}) do
+            equipTool(toolName, character, backpack)
+            task.wait(0.05)
+        end
+
+        handleRock(rock, leftHand)
+        player:WaitForChild("muscleEvent"):FireServer("rep")
+        task.wait(0.1)
+    end
+end
     
 local Rock = window:AddTab("Rock")
 
